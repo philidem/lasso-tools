@@ -1,0 +1,30 @@
+{
+  "name": "lasso-tools",
+  "description": "Lasso Tools",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "app-root-dir": "^1.0.1",
+    "browser-refresh": "^1.4.3",
+    "browser-refresh-taglib": "^1.0.3",
+    "colors": "^1.0.3",
+    "express": "^4.12.3",
+    "http-proxy": "^1.11.1",
+    "lasso": "^1.8.1",
+    "lasso-image": "^1.0.5",
+    "lasso-less": "^2.0.3",
+    "lasso-marko": "^2.0.3",
+    "marko": "^2.3.2",
+    "mkdirp": "^0.5.0",
+    "raptor-args": "^1.0.2",
+    "raptor-async": "^1.0.3",
+    "raptor-logging": "^1.0.5",
+    "raptor-util": "^1.0.9",
+    "resolve": "^1.1.6",
+    "rest-handler": "^1.2.11",
+    "send": "^0.12.2",
+    "serve-static": "^1.9.2",
+    "task-list": "^1.0.1",
+    "typed-model": "^2.0.6"
+  }
+}
