@@ -3,6 +3,7 @@
   "description": "Lasso Tools",
   "version": "0.0.1",
   "private": true,
+  "main": "src/index.js",
   "dependencies": {
     "app-root-dir": "^1.0.1",
     "browser-refresh": "^1.4.3",
@@ -14,7 +15,6 @@
     "lasso-image": "^1.0.5",
     "lasso-less": "^2.0.3",
     "lasso-marko": "^2.0.3",
-    "marko": "^2.3.2",
     "mkdirp": "^0.5.0",
     "raptor-args": "^1.0.2",
     "raptor-async": "^1.0.3",

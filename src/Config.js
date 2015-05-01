@@ -7,12 +7,6 @@ var LogLevel = require('typed-model/Enum').create({
 
 module.exports = require('typed-model/Model').extend({
     properties: {
-        args: {
-            type: Object,
-            commandLine: false,
-            description: 'Command line arguments'
-        },
-
         colors: {
             type: Boolean,
             description: 'Use color in logging?',
