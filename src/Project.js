@@ -4,6 +4,7 @@ var fs = require('fs');
 var resolve = require('resolve');
 var logger = logging.logger();
 var async = require('raptor-async');
+var nodePath = require('path');
 
 function _configure(project) {
     var config = project.getConfig();
@@ -72,9 +73,6 @@ function _configure(project) {
 }
 
 function _initProject(project, callback) {
-    //var options = project.getOptions();
-    var nodePath = require('path');
-
     var work = project.getOptions().getWork();
 
     async.series(work, function(err) {
@@ -90,58 +88,33 @@ function _initProject(project, callback) {
         // merge configuration from command line and config file
         _configure(project);
 
-        var projectFactory = project.getFactory();
-        projectFactory(config, function(err, projectData) {
-            if (err) {
-                return callback(err);
-            }
-
-            if (!projectData.projectDir) {
-                projectData.projectDir = require('app-root-dir').get();
-            }
-
-            var errors = [];
-            var Project = project.constructor;
-            Object.keys(projectData).forEach(function(key) {
-                if (Project.properties[key]) {
-                    project.set(key, projectData[key], errors);
-                }
-            });
-
-            if (errors.length) {
-                return callback(new Error('Project errors: ' + errors.join(', ')));
-            }
-
-            project.getResolveOptions().basedir = project.getProjectDir();
-
-            project.getOptions().getOnConfig().forEach(function(onConfig) {
-                onConfig.call(project, config);
-            });
-
-            if (!config.getUrlPrefix()) {
-                config.setUrlPrefix('/' + (project.defaultOutputDir || 'static') + '/');
-            }
-
-            if (!config.getOutputDir()) {
-                config.setOutputDir(nodePath.join(project.getProjectDir(), config.getUrlPrefix()));
-            }
-
-            logging.configure({
-                loggers: {
-                    'ROOT': 'WARN',
-                    'lasso-tools': 'INFO',
-                    'request': 'INFO'
-                },
-                colors: config.getColors()
-            });
-
-            var startupTasks = require('task-list').create({
-                logger: logger,
-                tasks: project.getOptions().getTasks()
-            });
-
-            startupTasks.startAll(callback);
+        logging.configure({
+            loggers: {
+                'ROOT': 'WARN',
+                'lasso-tools': 'INFO',
+                'request': 'INFO'
+            },
+            colors: config.getColors()
         });
+
+        project.getResolveOptions().basedir = project.getProjectDir();
+
+        project.getOptions().getOnConfig().forEach(function(onConfig) {
+            onConfig.call(project, config);
+        });
+
+        if (!config.getUrlPrefix()) {
+            config.setUrlPrefix('/' + (project.defaultOutputDir || 'static') + '/');
+        }
+
+        if (!config.getOutputDir()) {
+            config.setOutputDir(nodePath.join(project.getProjectDir(), config.getUrlPrefix()));
+        }
+
+        require('task-list').create({
+            logger: logger,
+            tasks: project.getOptions().getTasks()
+        }).startAll(callback);
     });
 }
 
@@ -227,7 +200,8 @@ var Options = Model.extend({
         onConfig: [Function],
         args: Object,
         tasks: [Object],
-        work: [Function]
+        work: [Function],
+        lassoPlugins: [Object]
     }
 });
 
@@ -255,7 +229,8 @@ module.exports = Model.extend({
             usage: 'Usage: $0 [options]',
             examples: [],
             onConfig: [],
-            work: []
+            work: [],
+            lassoPlugins: []
         }));
 
         this.setResolveOptions({
@@ -273,9 +248,20 @@ module.exports = Model.extend({
 
         var self = this;
 
+        var projectModules = {};
+
         this.util = {
             requireFromProject: function(moduleName) {
-                return require(resolve.sync(moduleName, self.getResolveOptions()));
+                return projectModules[moduleName] || (projectModules[moduleName] = require(resolve.sync(moduleName, self.getResolveOptions())));
+            },
+
+            loadMarkoTemplate: function(template) {
+                if (template.constructor === String) {
+                    return this.requireFromProject('marko').load(template);
+                } else {
+                    return template;
+                }
+
             }
         };
     },
@@ -284,7 +270,13 @@ module.exports = Model.extend({
         Model: Model,
         Enum: require('typed-model/Enum'),
 
-        logger: logger,
+        getLogger: function() {
+            return logger;
+        },
+
+        getLogging: function() {
+            return logging;
+        },
 
         Config: require('./Config'),
 
@@ -364,6 +356,10 @@ module.exports = Model.extend({
                 self.doStart(callback);
             });
             return this;
+        },
+
+        lassoPlugin: function(plugin) {
+            this.getOptions().getLassoPlugins().push(plugin);
         }
     }
 });

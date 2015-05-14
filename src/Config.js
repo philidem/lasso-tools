@@ -16,7 +16,7 @@ module.exports = require('typed-model/Model').extend({
         logLevel: {
             type: LogLevel,
             description: 'Log level (' + LogLevel.values.join(', ') + ')',
-            defaultValue: LogLevel.INFO
+            defaultValue: LogLevel.WARN
         },
 
         minify: {

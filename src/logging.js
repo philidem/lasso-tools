@@ -1,6 +1,7 @@
 /* jshint devel:true */
 var nodePath = require('path');
 var raptorLogging = require('raptor-logging');
+var extend = require('raptor-util/extend');
 
 var _basedir = nodePath.normalize(nodePath.join(__dirname, '..'));
 var _colorsEnabled = false;
@@ -84,23 +85,26 @@ ConsoleAppender.prototype.log = function(logEvent) {
     console.log.apply(console, args);
 };
 
-module.exports = {
+raptorLogging.configureAppenders([new ConsoleAppender()]);
+
+var loggers = {};
+
+extend(exports, {
     setBasedir: function(basedir) {
         _basedir = basedir;
     },
 
     configure: function(config) {
         if (config.loggers) {
+            extend(loggers, config.loggers);
             raptorLogging.configure({
-                loggers: config.loggers
+                loggers: loggers
             });
         }
 
         if (config.colors) {
             this.enableColors();
         }
-
-        raptorLogging.configureAppenders([new ConsoleAppender()]);
     },
 
     enableColors: function() {
@@ -152,4 +156,4 @@ module.exports = {
 
         return logger;
     }
-};
+});

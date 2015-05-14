@@ -2,10 +2,18 @@ var logger = require('../logging').logger(module);
 var secureRegex = /\;[ ]*[Ss]ecure/g;
 //var requestHandler = require('src/request-handler');
 
-function HttpProxy(target, options) {
-    options = options || {};
+function HttpProxy(options) {
+    var target = this.target = options.getTarget();
 
-    this.target = target;
+    var prefix = options.getPrefix();
+
+    if (prefix && prefix.charAt(prefix.length - 1) === '/') {
+        // trim the trailing slash
+        prefix = prefix.substring(0, prefix.length - 1);
+    }
+
+    this.prefix = prefix;
+
     var httpProxy = this._httpProxy = require('http-proxy').createProxyServer({
         target: target,
         secure: false,
@@ -27,7 +35,7 @@ function HttpProxy(target, options) {
         }
     });
 
-    if (options.allowInsecure) {
+    if (options.getAllowInsecure()) {
         httpProxy.on('proxyRes', function(response) {
             var setCookie = response.headers['set-cookie'];
 
@@ -46,22 +54,33 @@ function HttpProxy(target, options) {
     }
 }
 
-HttpProxy.prototype.createRoute = function(prefix, options) {
+HttpProxy.prototype.createRoute = function(path, options) {
     options = options || {};
     var httpProxy = this._httpProxy;
 
+
+    if (path.charAt(0) !== '/') {
+        // make sure the path starts with a slash
+        path = '/' + path;
+    }
+
+    var prefixLen = 0;
+
+    if (this.prefix) {
+        prefixLen += this.prefix.length;
+
+        // add the prefix to the start of the path
+        path = this.prefix + path;
+    }
+
     return {
-        path: prefix,
-
+        path: path,
         method: options.method || '*',
-
-        desc: options.description || ('proxy to ' + this.target),
-
         handler: function(rest) {
             var req = rest.req;
 
-            if (options.removePrefix) {
-                req.url = req.url.substring(prefix.length);
+            if (prefixLen) {
+                req.url = req.url.substring(prefixLen);
             }
 
             if (rest.isUpgrade()) {

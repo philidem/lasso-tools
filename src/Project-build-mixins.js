@@ -5,7 +5,8 @@ var mkdirp = require('mkdirp');
 
 function _createBuildTemplateJob(project, route) {
     var config = project.getConfig();
-
+    route.template = project.util.loadMarkoTemplate(route.template);
+    
     return function(callback) {
         var outputDir = config.getOutputDir();
         var pageDir = nodePath.join(outputDir, route.path);

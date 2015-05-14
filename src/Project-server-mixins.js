@@ -50,6 +50,15 @@ var ServerOptions = Model.extend({
     }
 });
 
+var HttpProxyOptions = Model.extend({
+    properties: {
+        target: String,
+        paths: [String],
+        prefix: String,
+        allowInsecure: Boolean
+    }
+});
+
 module.exports = {
     defaultOutputDir: 'static',
 
@@ -167,9 +176,10 @@ module.exports = {
 
         var routes = this.getRoutes();
 
-        routes.forEach(function(route) {
+        function handleRoute(route) {
             if (!route.handler) {
                 if (route.template) {
+                    route.template = self.util.loadMarkoTemplate(route.template);
                     route.method = route.method || 'GET';
                     route.handler = templateRouteHandler;
                 } else if (route.manifest) {
@@ -180,11 +190,19 @@ module.exports = {
             }
 
             restHandler.addRoute(route);
-        });
+        }
 
-        this.getServerOptions().getRoutes().forEach(function(route) {
-            restHandler.addRoute(route);
-        });
+        logger.info('Loading project routes...');
+
+        routes.forEach(handleRoute);
+
+        logger.info('Loaded project routes.');
+
+        logger.info('Loading server routes...');
+
+        this.getServerOptions().getRoutes().forEach(handleRoute);
+
+        logger.info('Loaded server routes.');
 
         var ssl = false;
         var httpsOptions;
@@ -299,6 +317,8 @@ module.exports = {
 
             path: routePath,
 
+            logRequests: false,
+
             handler: function(rest) {
                 _cors(rest);
                 rest.setResponseHeader('Access-Control-Max-Age', 1728000);
@@ -310,11 +330,9 @@ module.exports = {
         serverRoutes.push({
             method: 'GET',
 
-            log: false,
-
             path: routePath,
 
-            description: 'static ' + urlPrefix + ' => ' + baseDir,
+            logRequests: false,
 
             handler: function(rest) {
                 _cors(rest);
@@ -340,13 +358,20 @@ module.exports = {
         return this;
     },
 
-    proxy: function(target, paths, options) {
+    proxy: function(options) {
         var self = this;
-        var HttpProxy = require('./util/HttpProxy');
-        var proxy = new HttpProxy(target, options);
 
-        paths.forEach(function(prefix) {
-            self.route(proxy.createRoute(prefix));
+        var errors = [];
+        options = HttpProxyOptions.wrap(options, errors);
+        if (errors.length > 0) {
+            throw new Error('Invalid HTTP proxy options: ' + errors.join(', '));
+        }
+
+        var HttpProxy = require('./util/HttpProxy');
+        var proxy = new HttpProxy(options);
+
+        options.getPaths().forEach(function(path) {
+            self.route(proxy.createRoute(path));
         });
     }
 };
