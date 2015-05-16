@@ -4,7 +4,7 @@ exports.create = function(project) {
         start: function(callback) {
             var projectFactory = project.getFactory();
             var config = project.getConfig();
-            projectFactory(config, function(err, projectData) {
+            projectFactory.call(project, config, function(err, projectData) {
                 if (err) {
                     return callback(err);
                 }

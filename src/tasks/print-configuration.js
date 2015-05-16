@@ -6,7 +6,7 @@ exports.create = function(project) {
             var config = project.getConfig();
             var colorsEnabled = config.getColors();
             var rawConfig = config.clean();
-            logger.info('CONFIGURATION:\n' + Object.keys(rawConfig).map(function(key) {
+            logger.info('\nCONFIGURATION:\n' + Object.keys(rawConfig).map(function(key) {
                 var value = rawConfig[key];
                 if (value == null) {
                     value = '(not set)';

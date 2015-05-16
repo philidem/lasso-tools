@@ -37,6 +37,12 @@ module.exports = require('typed-model/Model').extend({
             defaultValue: undefined
         },
 
+        fingerPrintsEnabled: {
+            type: Boolean,
+            description: 'Fingerprint build artifacts?',
+            defaultValue: undefined
+        },
+
         production: {
             type: Boolean,
             description: 'Build for production?',

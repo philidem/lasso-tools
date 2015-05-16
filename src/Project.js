@@ -5,6 +5,8 @@ var resolve = require('resolve');
 var logger = logging.logger();
 var async = require('raptor-async');
 var nodePath = require('path');
+var lasso = require('lasso');
+var _chooseNotNull = require('./util').chooseNotNull;
 
 function _configure(project) {
     var config = project.getConfig();
@@ -90,7 +92,7 @@ function _initProject(project, callback) {
 
         logging.configure({
             loggers: {
-                'ROOT': 'WARN',
+                'ROOT': 'INFO',
                 'lasso-tools': 'INFO',
                 'request': 'INFO'
             },
@@ -103,12 +105,14 @@ function _initProject(project, callback) {
             onConfig.call(project, config);
         });
 
+        var defaultOutputDir = (project.defaultOutputDir || 'static');
+
         if (!config.getUrlPrefix()) {
-            config.setUrlPrefix('/' + (project.defaultOutputDir || 'static') + '/');
+            config.setUrlPrefix('/' + defaultOutputDir+ '/');
         }
 
         if (!config.getOutputDir()) {
-            config.setOutputDir(nodePath.join(project.getProjectDir(), config.getUrlPrefix()));
+            config.setOutputDir(nodePath.join(project.getProjectDir(), defaultOutputDir));
         }
 
         require('task-list').create({
@@ -201,7 +205,8 @@ var Options = Model.extend({
         args: Object,
         tasks: [Object],
         work: [Function],
-        lassoPlugins: [Object]
+        lassoPlugins: [Object],
+        lassoBundles: [Object]
     }
 });
 
@@ -215,7 +220,6 @@ module.exports = Model.extend({
         serverOptions: Object,
         resolveOptions: Object,
         factory: Function,
-        manifestLasso: Object,
 
         // Configuration options from command line
         config: require('./Config')
@@ -230,7 +234,8 @@ module.exports = Model.extend({
             examples: [],
             onConfig: [],
             work: [],
-            lassoPlugins: []
+            lassoPlugins: [],
+            lassoBundles: []
         }));
 
         this.setResolveOptions({
@@ -261,7 +266,43 @@ module.exports = Model.extend({
                 } else {
                     return template;
                 }
+            },
 
+            renderTemplateRoute: function(route, out, callback) {
+                route.template.render({
+                    route: route
+                }, out, function(err) {
+                    if (err) {
+                        logger.error('Error building ' + route.path);
+                    } else {
+                        logger.success('Built ' + route.path);
+                    }
+
+                    if (callback) {
+                        callback(err);
+                    }
+                });
+            },
+
+            renderManifestRoute: function(route, callback) {
+                logger.info('Building ' + route.path);
+
+                var theLasso = route.lasso || lasso.getDefaultLasso();
+
+                theLasso.lassoPage({
+                    pageName: route.path,
+                    packagePath: route.manifest
+                }, function(err, result) {
+                    if (err) {
+                        logger.error('Error building ' + route.path);
+                    } else {
+                        logger.success('Built ' + route.path);
+                    }
+
+                    if (callback) {
+                        callback(err, result);
+                    }
+                });
             }
         };
     },
@@ -360,6 +401,45 @@ module.exports = Model.extend({
 
         lassoPlugin: function(plugin) {
             this.getOptions().getLassoPlugins().push(plugin);
+            return this;
+        },
+
+        lassoBundle: function(bundle) {
+            this.getOptions().getLassoBundles().push(bundle);
+            return this;
+        },
+
+        createLassoConfig: function(lassoConfig) {
+            var config = this.getConfig();
+            var result = extend({}, lassoConfig);
+
+            var minify = _chooseNotNull(config.minify, config.getMinify());
+
+            result.outputDir = _chooseNotNull(result.outputDir, config.getOutputDir());
+            result.urlPrefix = _chooseNotNull(result.urlPrefix, config.getUrlPrefix());
+            result.fingerprintsEnabled = _chooseNotNull(result.fingerprintsEnabled, config.getFingerPrintsEnabled(), false, config.getProduction());
+            result.bundlingEnabled = _chooseNotNull(result.bundlingEnabled, config.getProduction());
+            result.minifyJS = _chooseNotNull(result.minifyJS, config.getMinifyJs(), minify, config.getProduction());
+            result.minifyCSS = _chooseNotNull(result.minifyCSS, config.getMinifyCss(), minify, config.getProduction());
+            result.flags = _chooseNotNull(result.flags, config.getFlags());
+            result.cacheProfile = _chooseNotNull(result.cacheProfile,config.getProduction() ? 'production' : 'development');
+            result.bundles = _chooseNotNull(result.bundles, this.getOptions().getLassoBundles());
+            result.plugins = _chooseNotNull(result.plugins, [
+                {
+                    plugin: require('lasso-marko'),
+                    config: {
+                        compiler: this.util.requireFromProject('marko/compiler')
+                    }
+                },
+                require('lasso-less'),
+                require('lasso-image')
+            ].concat(this.getOptions().getLassoPlugins()));
+
+            return result;
+        },
+
+        createLasso: function(lassoConfig) {
+            return require('lasso').create(this.createLassoConfig(lassoConfig));
         }
     }
 });

@@ -95,34 +95,27 @@ module.exports = {
         var self = this;
 
         function templateRouteHandler(rest) {
-            var route = rest.route;
-            route.template.render(route.data, rest.res);
+            self.util.renderTemplateRoute(rest.route, rest.res);
         }
 
         function manifestRouteHandler(rest) {
             var route = rest.route;
-            var pageName = route.pageName;
             //var config = self.getConfig();
 
-            self.getManifestLasso().lassoPage({
-                pageName: pageName,
-                packagePath: route.manifest
-            }, function(err, result) {
+            self.util.renderManifestRoute(route, function(err, result) {
                 if (err) {
                     return rest.send(500, err.stack || err.toString());
                 }
 
                 _cors(rest);
 
-
-                //var relativePath = '/' + pageName + '.js';
-                var relativePath = result.getJavaScriptUrls()[0];
+                var relativePath = result.getUrlByBundleName(route.path);
 
                 send(rest.req, relativePath, {
                         root: self.getProjectDir()
                     })
                     .on('error', function(err) {
-                        logger.error('Error building ' + route.path + '.', err);
+                        logger.error('Error building ' + route.path, err);
                         rest.error(err);
                     })
                     .pipe(rest.res);
@@ -183,7 +176,6 @@ module.exports = {
                     route.method = route.method || 'GET';
                     route.handler = templateRouteHandler;
                 } else if (route.manifest) {
-                    route.pageName = route.path;
                     route.method = route.method || 'GET';
                     route.handler = manifestRouteHandler;
                 }
