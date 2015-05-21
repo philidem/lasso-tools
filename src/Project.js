@@ -283,7 +283,8 @@ module.exports = Model.extend({
 
             renderTemplateRoute: function(route, out, callback) {
                 route.template.render({
-                    route: route
+                    route: route,
+                    project: self
                 }, out, function(err) {
                     if (err) {
                         logger.error('Error building ' + route.path);
