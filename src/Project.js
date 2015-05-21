@@ -94,6 +94,26 @@ function _initProject(project, callback) {
         // merge configuration from command line and config file
         _configure(project);
 
+        project.getResolveOptions().basedir = project.getProjectDir();
+
+        if (!project.getVersion()) {
+            try {
+                var packageJson = project.util.requireFromProject('./package.json');
+                project.setVersion(packageJson.version);
+            } catch(e) {
+                // ignore
+            }
+        }
+
+        var buildNumber = project.getConfig().getBuildNumber();
+        if (buildNumber && project.getVersion()) {
+            var regex = /(\d+\.\d+\.)\d+(\-.*)?/;
+            var match = regex.exec(project.getVersion());
+            if (match) {
+                project.setVersion(match[1] + buildNumber + (match[2] || ''));
+            }
+        }
+
         logging.configure({
             loggers: {
                 'ROOT': 'INFO',
@@ -103,7 +123,7 @@ function _initProject(project, callback) {
             colors: config.getColors()
         });
 
-        project.getResolveOptions().basedir = project.getProjectDir();
+
 
         project.getOptions().getOnLoadConfig().forEach(function(onLoadConfig) {
             onLoadConfig.call(project, config);
@@ -459,6 +479,23 @@ module.exports = Model.extend({
 
         createLasso: function(lassoConfig) {
             return require('lasso').create(this.createLassoConfig(lassoConfig));
+        },
+
+        apply: function(projectData) {
+            var self = this;
+            var errors = [];
+            var Project = this.constructor;
+            Object.keys(projectData).forEach(function(key) {
+                if (Project.properties[key]) {
+                    self.set(key, projectData[key], errors);
+                }
+            });
+
+            if (errors.length) {
+                throw new Error('Invalid project configuration: ' + errors.join(', '));
+            }
+
+            return this;
         }
     }
 });

@@ -3,6 +3,7 @@ var send = require('send');
 var fs = require('fs');
 var logger = require('./logging').logger();
 var Integer = require('typed-model/Integer');
+var nodePath = require('path');
 
 function _cors(rest) {
     // enable CORS support
@@ -46,7 +47,8 @@ var Model = require('typed-model/Model');
 
 var ServerOptions = Model.extend({
     properties: {
-        routes: [Object]
+        routes: [Object],
+        routePrefix: String
     }
 });
 
@@ -168,8 +170,13 @@ module.exports = {
             });
 
         var routes = this.getRoutes();
+        var routePrefix = this.getServerOptions().getRoutePrefix();
 
-        function handleRoute(route) {
+        function handleRoute(route, routePrefix) {
+            if (routePrefix) {
+                route.path = nodePath.join('/', routePrefix, route.path);
+            }
+
             if (!route.handler) {
                 if (route.template) {
                     route.template = self.util.loadMarkoTemplate(route.template);
@@ -186,13 +193,17 @@ module.exports = {
 
         logger.info('Loading project routes...');
 
-        routes.forEach(handleRoute);
+        routes.forEach(function(route) {
+            handleRoute(route, routePrefix);
+        });
 
         logger.info('Loaded project routes.');
 
         logger.info('Loading server routes...');
 
-        this.getServerOptions().getRoutes().forEach(handleRoute);
+        this.getServerOptions().getRoutes().forEach(function(route) {
+            handleRoute(route);
+        });
 
         logger.info('Loaded server routes.');
 
@@ -291,6 +302,11 @@ module.exports = {
         this.getServerOptions()
             .getRoutes()
             .push(routeConfig);
+        return this;
+    },
+
+    routePrefix: function(routePrefix) {
+        this.getServerOptions().setRoutePrefix(routePrefix);
         return this;
     },
 
