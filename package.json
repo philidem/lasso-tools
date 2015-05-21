@@ -9,7 +9,7 @@
     "browser-refresh-taglib": "^1.0.3",
     "colors": "^1.0.3",
     "http-proxy": "^1.11.1",
-    "lasso": "^1.8.6",
+    "lasso": "^1.9.2",
     "lasso-image": "^1.0.7",
     "lasso-less": "^2.0.3",
     "lasso-marko": "^2.0.3",
