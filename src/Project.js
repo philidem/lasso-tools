@@ -304,7 +304,8 @@ module.exports = Model.extend({
             renderTemplateRoute: function(route, out, callback) {
                 route.template.render({
                     route: route,
-                    project: self
+                    project: self,
+                    lasso: route.lasso || lasso.getDefaultLasso()
                 }, out, function(err) {
                     if (err) {
                         logger.error('Error building ' + route.path);
@@ -456,8 +457,8 @@ module.exports = Model.extend({
 
             result.outputDir = _chooseNotNull(result.outputDir, config.getOutputDir());
             result.urlPrefix = _chooseNotNull(result.urlPrefix, config.getUrlPrefix());
-            result.fingerprintsEnabled = _chooseNotNull(result.fingerprintsEnabled, config.getFingerPrintsEnabled(), false, config.getProduction());
             result.bundlingEnabled = _chooseNotNull(result.bundlingEnabled, config.getProduction());
+            result.fingerprintsEnabled = _chooseNotNull(result.fingerprintsEnabled, config.getFingerPrintsEnabled(), result.bundlingEnabled);
             result.minifyJS = _chooseNotNull(result.minifyJS, config.getMinifyJs(), minify, config.getProduction());
             result.minifyCSS = _chooseNotNull(result.minifyCSS, config.getMinifyCss(), minify, config.getProduction());
             result.flags = _chooseNotNull(result.flags, config.getFlags());
