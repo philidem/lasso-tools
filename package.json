@@ -2,7 +2,6 @@
   "name": "lasso-tools",
   "description": "Lasso Tools",
   "version": "0.1.0",
-  "private": true,
   "main": "src/index.js",
   "dependencies": {
     "app-root-dir": "^1.0.1",
