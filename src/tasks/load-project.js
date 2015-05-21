@@ -4,6 +4,25 @@ exports.create = function(project) {
         start: function(callback) {
             var projectFactory = project.getFactory();
             var config = project.getConfig();
+
+            if (!project.getVersion()) {
+                try {
+                    var packageJson = project.util.requireFromProject('./package.json');
+                    project.setVersion(packageJson.version);
+                } catch(e) {
+                    // ignore
+                }
+            }
+
+            var buildNumber = project.getConfig().getBuildNumber();
+            if (buildNumber && project.getVersion()) {
+                var regex = /(\d+\.\d+\.)\d+(\-.*)?/;
+                var match = regex.exec(project.getVersion());
+                if (match) {
+                    project.setVersion(match[1] + buildNumber + (match[2] || ''));
+                }
+            }
+
             projectFactory.call(project, config, function(err, projectData) {
                 if (err) {
                     return callback(err);
@@ -19,23 +38,6 @@ exports.create = function(project) {
 
                 if (errors.length) {
                     return callback(new Error('Project errors: ' + errors.join(', ')));
-                }
-
-                if (!project.getVersion()) {
-                    try {
-                        project.setVersion(project.util.requireFromProject('./package.json'));
-                    } catch(e) {
-                        project.setVersion('0.0.0');
-                    }
-                }
-
-                var buildNumber = project.getConfig().getBuildNumber();
-                if (buildNumber) {
-                    var regex = /(\d+\.\d+\.)\d+(\-.*)?/;
-                    var match = regex.exec(project.getVersion());
-                    if (match) {
-                        project.setVersion(match[1] + buildNumber + (match[2] || ''));
-                    }
                 }
 
                 var logger = project.getLogger();
