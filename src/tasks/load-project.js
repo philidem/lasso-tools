@@ -21,7 +21,32 @@ exports.create = function(project) {
                     return callback(new Error('Project errors: ' + errors.join(', ')));
                 }
 
-                callback();
+                if (!project.getVersion()) {
+                    try {
+                        project.setVersion(project.util.requireFromProject('./package.json'));
+                    } catch(e) {
+                        project.setVersion('0.0.0');
+                    }
+                }
+
+                var buildNumber = project.getConfig().getBuildNumber();
+                if (buildNumber) {
+                    var regex = /(\d+\.\d+\.)\d+(\-.*)?/;
+                    var match = regex.exec(project.getVersion());
+                    if (match) {
+                        project.setVersion(match[1] + buildNumber + (match[2] || ''));
+                    }
+                }
+
+                var logger = project.getLogger();
+
+                logger.info('Project: ' + project.getName() + ' ' + project.getVersion());
+
+                project.getOptions().getOnLoadProject().forEach(function(onLoadProject) {
+                    onLoadProject.call(project, project);
+                });
+
+                process.nextTick(callback);
             });
         }
     };

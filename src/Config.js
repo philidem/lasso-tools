@@ -7,6 +7,12 @@ var LogLevel = require('typed-model/Enum').create({
 
 module.exports = require('typed-model/Model').extend({
     properties: {
+        buildNumber: {
+            type: Number,
+            description: 'Build number',
+            defaultValue: undefined
+        },
+
         colors: {
             type: Boolean,
             description: 'Use color in logging?',

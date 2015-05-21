@@ -14,7 +14,12 @@ function _configure(project) {
 
     var key;
     var configFileProperties;
-    var args = project.getOptions().getArgs();
+    var args;
+
+    if (project.getOptions().getParseCommandLine()) {
+        args = _parseCommandLine(project);
+    }
+
     var configFile = args.config;
 
     if (configFile) {
@@ -84,7 +89,6 @@ function _initProject(project, callback) {
 
         // create the initial config
         var config = new project.Config();
-
         project.setConfig(config);
 
         // merge configuration from command line and config file
@@ -101,8 +105,8 @@ function _initProject(project, callback) {
 
         project.getResolveOptions().basedir = project.getProjectDir();
 
-        project.getOptions().getOnConfig().forEach(function(onConfig) {
-            onConfig.call(project, config);
+        project.getOptions().getOnLoadConfig().forEach(function(onLoadConfig) {
+            onLoadConfig.call(project, config);
         });
 
         var defaultOutputDir = (project.defaultOutputDir || 'static');
@@ -185,7 +189,10 @@ function _parseCommandLine(project) {
 		process.exit(1);
 	});
 
-    options.setArgs(parser.parse());
+    var args = parser.parse();
+    options.setArgs(args);
+
+    return args;
 }
 
 var Model = require('typed-model/Model');
@@ -201,12 +208,14 @@ var Options = Model.extend({
     properties: {
         usage: String,
         examples: [Example],
-        onConfig: [Function],
+        onLoadConfig: [Function],
+        onLoadProject: [Function],
         args: Object,
         tasks: [Object],
         work: [Function],
         lassoPlugins: [Object],
-        lassoBundles: [Object]
+        lassoBundles: [Object],
+        parseCommandLine: Boolean
     }
 });
 
@@ -228,15 +237,19 @@ module.exports = Model.extend({
     additionalProperties: true,
 
     init: function() {
-        this.setOptions(new Options({
-            tasks: require('./default-tasks').create(this),
-            usage: 'Usage: $0 [options]',
-            examples: [],
-            onConfig: [],
-            work: [],
-            lassoPlugins: [],
-            lassoBundles: []
-        }));
+        var options = new Options();
+
+        options.setTasks(require('./default-tasks').create(this));
+        options.setUsage('Usage($0 [options]');
+        options.setExamples([]);
+        options.setOnLoadConfig([]);
+        options.setOnLoadProject([]);
+        options.setWork([]);
+        options.setLassoPlugins([]);
+        options.setLassoBundles([]);
+        options.setParseCommandLine(false);
+
+        this.setOptions(options);
 
         this.setResolveOptions({
             basedir: undefined,
@@ -334,13 +347,18 @@ module.exports = Model.extend({
     		return this;
     	},
 
-        onConfigured: function(handler) {
-            this.getOptions().getOnConfig().push(handler);
+        onLoadConfig: function(handler) {
+            this.getOptions().getOnLoadConfig().push(handler);
             return this;
         },
 
-        parseCommandLine: function() {
-            _parseCommandLine(this);
+        onLoadProject: function(handler) {
+            this.getOptions().getOnLoadProject().push(handler);
+            return this;
+        },
+
+        parseCommandLine: function(parse) {
+            this.getOptions().setParseCommandLine(parse !== false);
             return this;
         },
 
