@@ -15,7 +15,7 @@ function _createBuildTemplateJob(project, route, buildResult) {
         var outputDir = config.getOutputDir();
 
         var relativeFilePath = nodePath.join(route.path, 'index.html');
-        
+
         var pageDir = nodePath.join(outputDir, route.path);
         var outputFile = nodePath.join(outputDir, relativeFilePath);
 
@@ -48,7 +48,7 @@ function _createBuildManifestJob(project, route, buildResult) {
             var config = project.getConfig();
             var outputDir = config.getOutputDir();
             var oldPath = outputFile;
-            var newPath = nodePath.join(outputDir, route.path);
+            var newPath = nodePath.normalize(nodePath.join(outputDir, route.path));
 
             mkdirp(nodePath.dirname(newPath), function(err) {
                 if (err) {
