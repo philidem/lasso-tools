@@ -16,8 +16,8 @@ function _createBuildTemplateJob(project, route, buildResult) {
 
         var relativeFilePath = nodePath.join(route.path, 'index.html');
 
-        var pageDir = nodePath.join(outputDir, route.path);
-        var outputFile = nodePath.join(outputDir, relativeFilePath);
+        var pageDir = nodePath.normalize(nodePath.join(outputDir, route.path));
+        var outputFile = nodePath.normalize(nodePath.join(outputDir, relativeFilePath));
 
         buildResult.addRoute({
             url: route.path,
