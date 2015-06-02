@@ -48,7 +48,9 @@ var Model = require('typed-model/Model');
 var ServerOptions = Model.extend({
     properties: {
         routes: [Object],
-        routePrefix: String
+        routePrefix: String,
+        onServer: [Function],
+        onRestHandler: [Function]
     }
 });
 
@@ -66,7 +68,9 @@ module.exports = {
 
     doInit: function() {
         this.setServerOptions(new ServerOptions({
-            routes: []
+            routes: [],
+            onServer: [],
+            onRestHandler: []
         }));
 
         this.extendConfig({
@@ -169,6 +173,10 @@ module.exports = {
                 requestLogger.info('NOT FOUND: ' + req.method + ' ' + req.url);
             });
 
+        this.getServerOptions().getOnRestHandler().forEach(function(onRestHandler) {
+            onRestHandler.call(self, restHandler);
+        });
+
         var routes = this.getRoutes();
         var routePrefix = this.getServerOptions().getRoutePrefix();
 
@@ -256,6 +264,11 @@ module.exports = {
             callback(err);
         });
 
+
+        this.getServerOptions().getOnServer().forEach(function(onServer) {
+            onServer.call(self, server);
+        });
+
         // start listening for requests
         server.listen(httpPort, function() {
             logger.info('HTTP server is listening on port ' + httpPort + '.');
@@ -298,10 +311,17 @@ module.exports = {
         this.restHandler.handleUpgrade(req, socket, head);
     },
 
+    routes: function(routeConfigs) {
+        var routes = this.getServerOptions().getRoutes();
+        for (var i = 0; i < routeConfigs.length; i++) {
+            routes.push(routeConfigs[i]);
+        }
+        return this;
+    },
+
     route: function(routeConfig) {
-        this.getServerOptions()
-            .getRoutes()
-            .push(routeConfig);
+        var routes = this.getServerOptions().getRoutes();
+        routes.push(routeConfig);
         return this;
     },
 
@@ -381,5 +401,15 @@ module.exports = {
         options.getPaths().forEach(function(path) {
             self.route(proxy.createRoute(path));
         });
+    },
+
+    onServer: function(handler) {
+        this.getServerOptions().getOnServer().push(handler);
+        return this;
+    },
+
+    onRestHandler: function(handler) {
+        this.getServerOptions().getOnRestHandler().push(handler);
+        return this;
     }
 };
