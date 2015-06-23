@@ -4,35 +4,54 @@ var fs = require('fs');
 var mkdirp = require('mkdirp');
 var BuildResult = require('./BuildResult');
 
-function _createBuildTemplateJob(project, route, buildResult) {
+function _createRouteBuildJob(project, route, buildResult) {
     var config = project.getConfig();
-    route.template = project.util.loadMarkoTemplate(route.template);
+
+    if (route.template) {
+        route.template = project.util.loadMarkoTemplate(route.template);
+    }
 
     return function(callback) {
         var logger = project.getLogger();
-        logger.info('Building ' + route.path);
+
 
         var outputDir = config.getOutputDir();
+        var routePath = route.path;
 
-        var relativeFilePath = nodePath.join(route.path, 'index.html');
+        var relativeFilePath = route.path;
+        var pageDir;
 
-        var pageDir = nodePath.normalize(nodePath.join(outputDir, route.path));
-        var outputFile = nodePath.normalize(nodePath.join(outputDir, relativeFilePath));
+        if (route.path.charAt(routePath.length - 1) === '/') {
+            // route path is for a "directory" so use index page
+            relativeFilePath = nodePath.join(routePath, 'index.html');
+            pageDir = nodePath.join(outputDir, routePath);
+        } else {
+            // route path is for a "file" (no need for index page)
+            pageDir = nodePath.join(outputDir, nodePath.dirname(routePath));
+        }
+
+        // normalize file system paths
+        relativeFilePath = nodePath.normalize(relativeFilePath);
+        pageDir = nodePath.normalize(pageDir);
+
+        var outputFile = nodePath.join(outputDir, relativeFilePath);
+
+        logger.info('Building ' + routePath + ' to ' + outputFile + '...');
 
         buildResult.addRoute({
-            url: route.path,
-            path: route.path,
+            url: routePath,
+            path: routePath,
             file: relativeFilePath
         });
 
         mkdirp.sync(pageDir);
 
         var out = fs.createWriteStream(outputFile);
-        project.util.renderTemplateRoute(route, out, callback);
+        project.util.renderRoute(route, out, callback);
     };
 }
 
-function _createBuildManifestJob(project, route, buildResult) {
+function _createManifestRouteBuildJob(project, route, buildResult) {
     return function(callback) {
         project.util.renderManifestRoute(route, function(err, result) {
             if (err) {
@@ -92,10 +111,10 @@ module.exports = {
         buildResult.setRoutes(resultRoutes);
 
         routes.forEach(function(route, index) {
-            if (route.template) {
-                work.push(_createBuildTemplateJob(self, route, buildResult));
+            if (route.template || route.renderer) {
+                work.push(_createRouteBuildJob(self, route, buildResult));
             } else if (route.manifest) {
-                work.push(_createBuildManifestJob(self, route, buildResult));
+                work.push(_createManifestRouteBuildJob(self, route, buildResult));
             } else {
                 errors.push(new Error('Invalid route: ' + (route.name || ('#' + index))));
             }
@@ -106,7 +125,7 @@ module.exports = {
         }
 
         async.series(work, function(err) {
-            callback(err, buildResult);
+            callback.call(self, err, buildResult);
         });
     }
 };

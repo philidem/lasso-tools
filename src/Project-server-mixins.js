@@ -100,8 +100,8 @@ module.exports = {
     doStart: function(callback) {
         var self = this;
 
-        function templateRouteHandler(rest) {
-            self.util.renderTemplateRoute(rest.route, rest.res);
+        function routeHandler(rest) {
+            self.util.renderRoute(rest.route, rest.res);
         }
 
         function manifestRouteHandler(rest) {
@@ -189,7 +189,10 @@ module.exports = {
                 if (route.template) {
                     route.template = self.util.loadMarkoTemplate(route.template);
                     route.method = route.method || 'GET';
-                    route.handler = templateRouteHandler;
+                    route.handler = routeHandler;
+                } else if (route.renderer) {
+                    route.method = route.method || 'GET';
+                    route.handler = routeHandler;
                 } else if (route.manifest) {
                     route.method = route.method || 'GET';
                     route.handler = manifestRouteHandler;
@@ -274,12 +277,12 @@ module.exports = {
             logger.info('HTTP server is listening on port ' + httpPort + '.');
 
             if (process.send) {
-        		// We were launched by browser-refresh so tell the parent process
-        		// that we are ready...
-        		process.send('online');
-        	}
+                // We were launched by browser-refresh so tell the parent process
+                // that we are ready...
+                process.send('online');
+            }
 
-            callback(null, server);
+            callback.call(self, null, server);
         });
     },
 

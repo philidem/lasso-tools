@@ -7,6 +7,8 @@ var async = require('raptor-async');
 var nodePath = require('path');
 var lasso = require('lasso');
 var _chooseNotNull = require('./util').chooseNotNull;
+var raptorRenderer = require('raptor-renderer');
+var asyncWriter = require('async-writer');
 
 function _configure(project) {
     var config = project.getConfig();
@@ -15,22 +17,25 @@ function _configure(project) {
     var key;
     var configFileProperties;
     var args;
+    var configFile;
 
     if (project.getOptions().getParseCommandLine()) {
         args = _parseCommandLine(project);
     }
 
-    var configFile = args.config;
+    if (args) {
+        configFile = args.config;
 
-    if (configFile) {
-        var propertiesParser = require('./util/properties-parser');
-        configFileProperties = propertiesParser.parse({
-            data: fs.readFileSync(args.config, {encoding: 'utf8'}),
-            removeDashes: true
-        });
+        if (configFile) {
+            var propertiesParser = require('./util/properties-parser');
+            configFileProperties = propertiesParser.parse({
+                data: fs.readFileSync(args.config, {encoding: 'utf8'}),
+                removeDashes: true
+            });
 
-        delete args.config;
-        logger.success('Read configuration file: ' + configFile);
+            delete args.config;
+            logger.success('Read configuration file: ' + configFile);
+        }
     }
 
     var BooleanType = require('typed-model/Boolean');
@@ -57,9 +62,11 @@ function _configure(project) {
     }
 
     // Next, set properties from command line
-    for (key in args) {
-        if (args.hasOwnProperty(key)) {
-            setValue(key, args[key], 'command line');
+    if (args) {
+        for (key in args) {
+            if (args.hasOwnProperty(key)) {
+                setValue(key, args[key], 'command line');
+            }
         }
     }
 
@@ -186,28 +193,28 @@ function _parseCommandLine(project) {
         }
     });
 
-	var parser = require('raptor-args').createParser(raptorArgs);
+    var parser = require('raptor-args').createParser(raptorArgs);
 
     var options = project.getOptions();
 
-	parser.usage(options.getUsage());
+    parser.usage(options.getUsage());
 
-	options.getExamples().forEach(function(example) {
-		parser.example(example.getDescription(), example.getCommand());
-	});
+    options.getExamples().forEach(function(example) {
+        parser.example(example.getDescription(), example.getCommand());
+    });
 
-	parser.validate(function(result) {
-		if (result.help) {
-			this.printUsage();
-			process.exit(0);
-		}
-	});
+    parser.validate(function(result) {
+        if (result.help) {
+            this.printUsage();
+            process.exit(0);
+        }
+    });
 
-	parser.onError(function(err) {
-		this.printUsage();
-		console.error(err);
-		process.exit(1);
-	});
+    parser.onError(function(err) {
+        this.printUsage();
+        console.error(err);
+        process.exit(1);
+    });
 
     var args = parser.parse();
     options.setArgs(args);
@@ -290,7 +297,14 @@ module.exports = Model.extend({
 
         this.util = {
             requireFromProject: function(moduleName) {
-                return projectModules[moduleName] || (projectModules[moduleName] = require(resolve.sync(moduleName, self.getResolveOptions())));
+                var requiredModule = projectModules[moduleName];
+                if (!requiredModule) {
+                    var modulePath = resolve.sync(moduleName, self.getResolveOptions());
+                    projectModules[moduleName] = requiredModule = require(modulePath);
+                    logger.info('Required ' + modulePath);
+                }
+
+                return requiredModule;
             },
 
             loadMarkoTemplate: function(template) {
@@ -301,12 +315,14 @@ module.exports = Model.extend({
                 }
             },
 
-            renderTemplateRoute: function(route, out, callback) {
-                route.template.render({
+            renderRoute: function(route, out, callback) {
+                var input = {
                     route: route,
                     project: self,
                     lasso: route.lasso || lasso.getDefaultLasso()
-                }, out, function(err) {
+                };
+
+                var onRender = function(err) {
                     if (err) {
                         logger.error('Error building ' + route.path);
                     } else {
@@ -316,7 +332,14 @@ module.exports = Model.extend({
                     if (callback) {
                         callback(err);
                     }
-                });
+                };
+
+                if (route.template) {
+                    route.template.render(input, out, onRender);
+                } else if (route.renderer) {
+                    var asyncOut = asyncWriter.create(out);
+                    raptorRenderer.render(route.renderer, input, asyncOut, onRender);
+                }
             },
 
             renderManifestRoute: function(route, callback) {
@@ -358,16 +381,16 @@ module.exports = Model.extend({
 
         usage: function(usage) {
             this.getOptions().setUsage(usage);
-    		return this;
-    	},
+            return this;
+        },
 
-    	example: function(description, command) {
-    		this.getOptions().getExamples().push({
-    			description: description,
-    			command: command
-    		});
-    		return this;
-    	},
+        example: function(description, command) {
+            this.getOptions().getExamples().push({
+                description: description,
+                command: command
+            });
+            return this;
+        },
 
         onLoadConfig: function(handler) {
             this.getOptions().getOnLoadConfig().push(handler);
@@ -385,9 +408,9 @@ module.exports = Model.extend({
         },
 
         extendConfig: function(options) {
-    		this.Config = this.Config.extend(options);
-    		return this;
-    	},
+            this.Config = this.Config.extend(options);
+            return this;
+        },
 
         job: function(func) {
             var self = this;
