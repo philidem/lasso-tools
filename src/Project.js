@@ -301,7 +301,7 @@ module.exports = Model.extend({
                 if (!requiredModule) {
                     var modulePath = resolve.sync(moduleName, self.getResolveOptions());
                     projectModules[moduleName] = requiredModule = require(modulePath);
-                    logger.debug('Required ' + modulePath);
+                    // logger.debug('Required ' + modulePath);
                 }
 
                 return requiredModule;
