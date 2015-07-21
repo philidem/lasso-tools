@@ -404,6 +404,8 @@ module.exports = {
         options.getPaths().forEach(function(path) {
             self.route(proxy.createRoute(path));
         });
+
+        return this;
     },
 
     onServer: function(handler) {
