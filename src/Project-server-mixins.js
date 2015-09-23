@@ -4,6 +4,7 @@ var fs = require('fs');
 var logger = require('./logging').logger();
 var Integer = require('typed-model/Integer');
 var nodePath = require('path');
+var url = require('url');
 
 function _cors(rest) {
     // enable CORS support
@@ -136,7 +137,10 @@ module.exports = {
         
         var colorsEnabled = config.getColors();
 
-        self.staticRoute(config.getUrlPrefix(), config.getOutputDir());
+        var parsedUrl = url.parse(config.getUrlPrefix());
+        var urlPath = parsedUrl.pathname;
+        
+        self.staticRoute(urlPath, config.getOutputDir());
 
         var requestLogger = require('./logging').logger('request');
 

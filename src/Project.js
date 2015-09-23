@@ -321,6 +321,8 @@ module.exports = Model.extend({
                     project: self,
                     lasso: route.lasso || lasso.getDefaultLasso()
                 };
+                
+                input.$global = input;
 
                 var onRender = function(err) {
                     if (err) {
@@ -334,11 +336,11 @@ module.exports = Model.extend({
                     }
                 };
 
-                if (route.template) {
-                    route.template.render(input, out, onRender);
-                } else if (route.renderer) {
+                if (route.renderer) {
                     var asyncOut = asyncWriter.create(out);
                     raptorRenderer.render(route.renderer, input, asyncOut, onRender);
+                } else if (route.template) {
+                    route.template.render(input, out, onRender);
                 }
             },
 
@@ -513,7 +515,7 @@ module.exports = Model.extend({
                 require('lasso-less'),
                 require('lasso-image')
             ].concat(this.getOptions().getLassoPlugins()));
-
+            
             return result;
         },
 
