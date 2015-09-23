@@ -99,7 +99,11 @@ module.exports = {
 
     doStart: function(callback) {
         var self = this;
-
+        
+        var projectDir = this.getProjectDir();
+        var config = self.getConfig();
+        var relativeOutputDir = config.getOutputDir().substring(projectDir.length);
+        
         function routeHandler(rest) {
             self.util.renderRoute(rest.route, rest.res);
         }
@@ -114,9 +118,10 @@ module.exports = {
                 }
 
                 _cors(rest);
-
-                var relativePath = result.getUrlByBundleName(route.path);
-
+                
+                var relativePath = result.getUrlByBundleName(route.path)
+                    .replace(config.getUrlPrefix(), relativeOutputDir + '/');
+                
                 send(rest.req, relativePath, {
                         root: self.getProjectDir()
                     })
@@ -128,7 +133,7 @@ module.exports = {
             });
         }
 
-        var config = self.getConfig();
+        
         var colorsEnabled = config.getColors();
 
         self.staticRoute(config.getUrlPrefix(), config.getOutputDir());

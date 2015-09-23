@@ -1,9 +1,14 @@
 var logger = require('../logging').logger(module);
 var secureRegex = /\;[ ]*[Ss]ecure/g;
-//var requestHandler = require('src/request-handler');
+var url = require('url');
 
 function HttpProxy(options) {
     var target = this.target = options.getTarget();
+    var targetUrl = url.parse(target);
+    var host = targetUrl.hostname;
+    if (targetUrl.port) {
+        host += ':' + targetUrl.port;
+    }
 
     var prefix = options.getPrefix();
 
@@ -35,6 +40,10 @@ function HttpProxy(options) {
         }
     });
 
+    httpProxy.on('proxyReq', function(request) {
+        request.setHeader('Host', host);
+    });
+    
     if (options.getAllowInsecure()) {
         httpProxy.on('proxyRes', function(response) {
             var setCookie = response.headers['set-cookie'];
@@ -78,7 +87,7 @@ HttpProxy.prototype.createRoute = function(path, options) {
         method: options.method || '*',
         handler: function(rest) {
             var req = rest.req;
-
+            
             if (prefixLen) {
                 req.url = req.url.substring(prefixLen);
             }

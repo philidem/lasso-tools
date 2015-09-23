@@ -349,7 +349,11 @@ module.exports = Model.extend({
 
                 theLasso.lassoPage({
                     pageName: route.path,
-                    packagePath: route.manifest
+                    packagePath: route.manifest,
+                    data: {
+                        route: route,
+                        project: self
+                    }
                 }, function(err, result) {
                     if (err) {
                         logger.error('Error building ' + route.path);
@@ -469,6 +473,18 @@ module.exports = Model.extend({
 
         lassoBundle: function(bundle) {
             this.getOptions().getLassoBundles().push(bundle);
+            return this;
+        },
+        
+        lassoBundles: function(bundles, options) {
+            for (var i = 0; i < bundles.length; i++) {
+                var bundle = bundles[i];
+                if (options) {
+                    bundle = extend({}, bundle);
+                    extend(bundle, options);
+                }
+                this.getOptions().getLassoBundles().push(bundle);
+            }
             return this;
         },
 
