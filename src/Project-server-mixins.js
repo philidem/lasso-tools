@@ -2,7 +2,7 @@ var domain = require('domain');
 var send = require('send');
 var fs = require('fs');
 var logger = require('./logging').logger();
-var Integer = require('typed-model/Integer');
+var Integer = require('fashion-model/Integer');
 var nodePath = require('path');
 var url = require('url');
 
@@ -44,7 +44,7 @@ function _onRequsterError(err, req, res, rest) {
     }
 }
 
-var Model = require('typed-model/Model');
+var Model = require('fashion-model/Model');
 
 var ServerOptions = Model.extend({
     properties: {
@@ -100,11 +100,11 @@ module.exports = {
 
     doStart: function(callback) {
         var self = this;
-        
+
         var projectDir = this.getProjectDir();
         var config = self.getConfig();
         var relativeOutputDir = config.getOutputDir().substring(projectDir.length);
-        
+
         function routeHandler(rest) {
             self.util.renderRoute(rest.route, rest.res);
         }
@@ -119,10 +119,10 @@ module.exports = {
                 }
 
                 _cors(rest);
-                
+
                 var relativePath = result.getUrlByBundleName(route.path)
                     .replace(config.getUrlPrefix(), relativeOutputDir + '/');
-                
+
                 send(rest.req, relativePath, {
                         root: self.getProjectDir()
                     })
@@ -134,12 +134,12 @@ module.exports = {
             });
         }
 
-        
+
         var colorsEnabled = config.getColors();
 
         var parsedUrl = url.parse(config.getUrlPrefix());
         var urlPath = parsedUrl.pathname;
-        
+
         self.staticRoute(urlPath, config.getOutputDir());
 
         var requestLogger = require('./logging').logger('request');

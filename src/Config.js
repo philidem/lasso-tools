@@ -1,11 +1,11 @@
-var LogLevel = require('typed-model/Enum').create({
+var LogLevel = require('fashion-model/Enum').create({
     values: [
         'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'
     ],
     autoUpperCase: true
 });
 
-module.exports = require('typed-model/Model').extend({
+module.exports = require('fashion-model/Model').extend({
     properties: {
         buildNumber: {
             type: Number,

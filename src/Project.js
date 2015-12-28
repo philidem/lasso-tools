@@ -38,7 +38,7 @@ function _configure(project) {
         }
     }
 
-    var BooleanType = require('typed-model/Boolean');
+    var BooleanType = require('fashion-model/Boolean');
 
     function setValue(key, value, source) {
         var property = Config.getProperty(key);
@@ -139,7 +139,7 @@ function _initProject(project, callback) {
         var defaultOutputDir = (project.defaultOutputDir || 'static');
 
         if (!config.getUrlPrefix()) {
-            config.setUrlPrefix('/' + defaultOutputDir+ '/');
+            config.setUrlPrefix('/' + defaultOutputDir + '/');
         }
 
         if (!config.getOutputDir()) {
@@ -222,7 +222,7 @@ function _parseCommandLine(project) {
     return args;
 }
 
-var Model = require('typed-model/Model');
+var Model = require('fashion-model/Model');
 
 var Example = Model.extend({
     properties: {
@@ -321,12 +321,12 @@ module.exports = Model.extend({
                     project: self,
                     lasso: route.lasso || lasso.getDefaultLasso()
                 };
-                
+
                 input.$global = input;
 
                 var onRender = function(err) {
                     if (err) {
-                        logger.error('Error building ' + route.path);
+                        logger.error('Error building ' + route.path, err);
                     } else {
                         logger.success('Built ' + route.path);
                     }
@@ -358,7 +358,7 @@ module.exports = Model.extend({
                     }
                 }, function(err, result) {
                     if (err) {
-                        logger.error('Error building ' + route.path);
+                        logger.error('Error building ' + route.path, err);
                     } else {
                         logger.success('Built ' + route.path);
                     }
@@ -373,7 +373,7 @@ module.exports = Model.extend({
 
     prototype: {
         Model: Model,
-        Enum: require('typed-model/Enum'),
+        Enum: require('fashion-model/Enum'),
 
         getLogger: function() {
             return logger;
@@ -477,7 +477,7 @@ module.exports = Model.extend({
             this.getOptions().getLassoBundles().push(bundle);
             return this;
         },
-        
+
         lassoBundles: function(bundles, options) {
             for (var i = 0; i < bundles.length; i++) {
                 var bundle = bundles[i];
@@ -515,7 +515,7 @@ module.exports = Model.extend({
                 require('lasso-less'),
                 require('lasso-image')
             ].concat(this.getOptions().getLassoPlugins()));
-            
+
             return result;
         },
 

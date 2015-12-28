@@ -1,4 +1,4 @@
-var Model = require('typed-model/Model');
+var Model = require('fashion-model/Model');
 
 var Route = Model.extend({
     properties: {

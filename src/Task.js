@@ -1,4 +1,4 @@
-module.exports = require('typed-model/Model').extend({
+module.exports = require('fashion-model/Model').extend({
     properties: {
         name: String,
         start: Function
