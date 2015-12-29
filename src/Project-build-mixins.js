@@ -80,7 +80,28 @@ function _createManifestRouteBuildJob(project, route, buildResult) {
                     file: route.path
                 });
 
-                fs.rename(oldPath, newPath, callback);
+                var source = fs.createReadStream(oldPath);
+                var destination = fs.createWriteStream(newPath);
+
+                var errorHandled = false;
+
+                function onError(err) {
+                    if (errorHandled) {
+                        return;
+                    }
+
+                    errorHandled = true;
+                    callback(err);
+                }
+
+                source.on('error', onError);
+                destination.on('error', onError);
+
+                destination.on('finish', function() {
+                    callback();
+                });
+
+                fs.createReadStream(oldPath).pipe(destination);
             });
         });
     };
