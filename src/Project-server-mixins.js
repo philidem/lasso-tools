@@ -291,6 +291,18 @@ module.exports = {
                 process.send('online');
             }
 
+            var selfUri = config.getSslCert() ?
+                'https://localhost' :
+                'http://localhost';
+
+            selfUri += ':' + config.getHttpPort();
+
+            if (config.getColors()) {
+                selfUri = selfUri.white.underline;
+            }
+
+            logger.success('LISTENING ON: ' + selfUri);
+
             callback.call(self, null, server);
         });
     },
