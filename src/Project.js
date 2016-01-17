@@ -319,7 +319,8 @@ module.exports = Model.extend({
                 var input = {
                     route: route,
                     project: self,
-                    lasso: route.lasso || lasso.getDefaultLasso()
+                    lasso: route.lasso || lasso.getDefaultLasso(),
+                    pageName: route.pageName || route.path
                 };
 
                 input.$global = input;
@@ -350,7 +351,7 @@ module.exports = Model.extend({
                 var theLasso = route.lasso || lasso.getDefaultLasso();
 
                 theLasso.lassoPage({
-                    pageName: route.path,
+                    pageName: route.pageName || route.path,
                     packagePath: route.manifest,
                     data: {
                         route: route,
