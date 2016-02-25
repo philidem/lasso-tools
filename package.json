@@ -9,7 +9,7 @@
     "colors": "^1.0.3",
     "fashion-model": "^5.0.8",
     "http-proxy": "^1.11.1",
-    "lasso": "^2.0.0",
+    "lasso": "^2.1.1",
     "lasso-image": "^1.0.7",
     "lasso-less": "^2.0.3",
     "lasso-marko": "^2.0.3",
