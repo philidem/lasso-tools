@@ -168,6 +168,18 @@ require('./lasso-project')
 ### src/pages/app/index.marko
 
 ```html
+<lasso-page package-path="./browser.json" />
+<!DOCTYPE html>
+<html>
+<head>
+    <lasso-head/>
+</head>
+<body>
+    Hello World!
+    <lasso-body/>
+    <init-widgets />
+</body>
+</html>
 ```
 
 ### src/pages/app/browser.json
