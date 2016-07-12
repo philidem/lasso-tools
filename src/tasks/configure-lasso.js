@@ -3,7 +3,11 @@ exports.create = function(project) {
         name: 'configure-lasso',
         start: function(callback) {
             // Configure the default lasso...
-            require('lasso').configure(project.createLassoConfig(), project.getProjectDir());
+            var lassoConfig = project.getOptions().getLassoConfig();
+
+            require('lasso').configure(
+                project.createLassoConfig(lassoConfig),
+                project.getProjectDir());
 
             process.nextTick(callback);
         }

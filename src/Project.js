@@ -240,6 +240,7 @@ var Options = Model.extend({
         args: Object,
         tasks: [Object],
         work: [Function],
+        lassoConfig: Object,
         lassoPlugins: [Object],
         lassoBundles: [Object],
         parseCommandLine: Boolean
@@ -488,6 +489,12 @@ module.exports = Model.extend({
                 }
                 this.getOptions().getLassoBundles().push(bundle);
             }
+            return this;
+        },
+
+
+        lassoConfig: function(lassoConfig) {
+            this.getOptions().setLassoConfig(lassoConfig);
             return this;
         },
 
