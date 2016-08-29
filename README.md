@@ -353,6 +353,16 @@ BASEDIR=`dirname $0`
 MARKO_CLEAN=true node $BASEDIR/node_modules/.bin/browser-refresh "$BASEDIR/server.js" --config config-dev.properties --ssl-cert server.crt --ssl-key server.key
 ```
 
+**Example configuration properties file:**
+
+```
+# Specify HTTP port
+http-port = 8888
+
+# Minify JavaScript and CSS files
+minify = true
+```
+
 Open `http://localhost:8888/` and you should see "Hello World!".
 
 ## Build Project
