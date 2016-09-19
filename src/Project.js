@@ -317,6 +317,8 @@ module.exports = Model.extend({
             },
 
             renderRoute: function(route, out, callback) {
+                logger.info('Building page ' + route.path);
+
                 var input = {
                     route: route,
                     project: self,
@@ -328,9 +330,9 @@ module.exports = Model.extend({
 
                 var onRender = function(err) {
                     if (err) {
-                        logger.error('Error building ' + route.path, err);
+                        logger.error('Error building page ' + route.path, err);
                     } else {
-                        logger.success('Built ' + route.path);
+                        logger.success('Built page ' + route.path);
                     }
 
                     if (callback) {
@@ -347,7 +349,7 @@ module.exports = Model.extend({
             },
 
             renderManifestRoute: function(route, callback) {
-                logger.info('Building ' + route.path);
+                logger.info('Building manifest route ' + route.path);
 
                 var theLasso = route.lasso || lasso.getDefaultLasso();
 
@@ -360,9 +362,9 @@ module.exports = Model.extend({
                     }
                 }, function(err, result) {
                     if (err) {
-                        logger.error('Error building ' + route.path, err);
+                        logger.error('Error building manifest route' + route.path, err);
                     } else {
-                        logger.success('Built ' + route.path);
+                        logger.success('Built manifest route ' + route.path);
                     }
 
                     if (callback) {

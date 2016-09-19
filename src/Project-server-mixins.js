@@ -103,7 +103,6 @@ module.exports = {
 
         var projectDir = this.getProjectDir();
         var config = self.getConfig();
-        var relativeOutputDir = config.getOutputDir().substring(projectDir.length);
 
         function routeHandler(rest) {
             self.util.renderRoute(rest.route, rest.res);
@@ -119,6 +118,10 @@ module.exports = {
                 }
 
                 _cors(rest);
+
+                var outputDir = (route.lasso) ? route.lasso.getConfig().outputDir : config.getOutputDir();
+
+                var relativeOutputDir = outputDir.substring(projectDir.length);
 
                 var relativePath = result.getUrlByBundleName(route.path)
                     .replace(config.getUrlPrefix(), relativeOutputDir + '/');
