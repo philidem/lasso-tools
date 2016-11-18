@@ -506,7 +506,7 @@ module.exports = Model.extend({
 
             var minify = _chooseNotNull(config.minify, config.getMinify());
 
-            result.noConflict = this.getName();
+            result.noConflict = result.noConflict || this.getName();
             result.outputDir = _chooseNotNull(result.outputDir, config.getOutputDir());
             result.urlPrefix = _chooseNotNull(result.urlPrefix, config.getUrlPrefix());
             result.bundlingEnabled = _chooseNotNull(result.bundlingEnabled, config.getProduction());
