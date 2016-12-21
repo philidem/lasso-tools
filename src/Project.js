@@ -328,23 +328,27 @@ module.exports = Model.extend({
 
                 input.$global = input;
 
-                var onRender = function(err) {
-                    if (err) {
-                        logger.error('Error building page ' + route.path, err);
-                    } else {
-                        logger.success('Built page ' + route.path);
-                    }
+                out.on('error', function(err) {
+                    //logger.error('Error building page ' + route.path, err);
 
                     if (callback) {
                         callback(err);
                     }
-                };
+                });
+
+                out.on('finish', function() {
+                    logger.success('Built page ' + route.path);
+
+                    if (callback) {
+                        callback();
+                    }
+                });
 
                 if (route.renderer) {
                     var asyncOut = asyncWriter.create(out);
-                    raptorRenderer.render(route.renderer, input, asyncOut, onRender);
+                    raptorRenderer.render(route.renderer, input, asyncOut);
                 } else if (route.template) {
-                    route.template.render(input, out, onRender);
+                    route.template.render(input, out);
                 }
             },
 
